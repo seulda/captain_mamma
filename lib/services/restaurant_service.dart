@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:math';
 import '../models/restaurant_model.dart';
 import '../models/filter_model.dart';
@@ -6,7 +7,7 @@ import '../utils/env_config.dart';
 
 class RestaurantService {
   final Dio _dio = Dio();
-  
+
   // 환경 변수에서 API 키 가져오기
   String get kakaoApiKey => EnvConfig.kakaoApiKey;
   String get naverClientId => EnvConfig.naverClientId;
@@ -28,7 +29,7 @@ class RestaurantService {
     try {
       // 카테고리 코드 생성
       String category = _buildCategoryCode(foodTypes);
-      
+
       final response = await _dio.get(
         'https://dapi.kakao.com/v2/local/search/category.json',
         options: Options(
@@ -50,21 +51,22 @@ class RestaurantService {
 
         for (final doc in documents) {
           final restaurant = _parseKakaoResponse(doc, latitude, longitude);
-          
+
           // 메뉴 타입 필터링
-          if (menuTypes.isNotEmpty && !_matchesMenuTypes(restaurant, menuTypes)) {
+          if (menuTypes.isNotEmpty &&
+              !_matchesMenuTypes(restaurant, menuTypes)) {
             continue;
           }
-          
+
           restaurants.add(restaurant);
         }
 
         return restaurants;
       }
-      
+
       return [];
     } catch (e) {
-      print('레스토랑 검색 실패: $e');
+      debugPrint('레스토랑 검색 실패: $e');
       // 개발 중에는 더미 데이터 반환
       return _getDummyRestaurants(latitude, longitude, radius);
     }
@@ -90,10 +92,10 @@ class RestaurantService {
           return _parseKakaoResponse(documents.first, 0, 0);
         }
       }
-      
+
       return null;
     } catch (e) {
-      print('레스토랑 상세 정보 가져오기 실패: $e');
+      debugPrint('레스토랑 상세 정보 가져오기 실패: $e');
       return null;
     }
   }
@@ -125,7 +127,7 @@ class RestaurantService {
   // 카테고리 코드 생성
   String _buildCategoryCode(List<FoodType> foodTypes) {
     if (foodTypes.isEmpty) return 'FD6'; // 음식점 전체
-    
+
     // 음식 종류에 따른 카테고리 매핑
     final categoryMap = {
       FoodType.korean: 'FD6',
@@ -134,7 +136,7 @@ class RestaurantService {
       FoodType.japanese: 'FD6',
       FoodType.other: 'FD6',
     };
-    
+
     return categoryMap[foodTypes.first] ?? 'FD6';
   }
 
@@ -151,7 +153,7 @@ class RestaurantService {
   // 태그 생성
   List<String> _generateTags(String categoryName) {
     List<String> tags = [];
-    
+
     if (categoryName.contains('한식')) tags.add('한식');
     if (categoryName.contains('중식')) tags.add('중식');
     if (categoryName.contains('일식')) tags.add('일식');
@@ -164,22 +166,23 @@ class RestaurantService {
     if (categoryName.contains('밥')) tags.add('밥류');
     if (categoryName.contains('국')) tags.add('국물류');
     if (categoryName.contains('찌개')) tags.add('국물류');
-    
+
     return tags;
   }
 
   // 거리 계산 (Haversine 공식)
-  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+  double _calculateDistance(
+      double lat1, double lon1, double lat2, double lon2) {
     const double earthRadius = 6371; // km
     final double dLat = _degreesToRadians(lat2 - lat1);
     final double dLon = _degreesToRadians(lon2 - lon1);
-    
+
     final double a = sin(dLat / 2) * sin(dLat / 2) +
         cos(_degreesToRadians(lat1)) *
             cos(_degreesToRadians(lat2)) *
             sin(dLon / 2) *
             sin(dLon / 2);
-    
+
     final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
     return earthRadius * c;
   }
@@ -242,4 +245,4 @@ class RestaurantService {
 
     return dummyRestaurants;
   }
-} 
+}

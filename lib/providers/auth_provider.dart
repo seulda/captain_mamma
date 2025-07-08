@@ -65,6 +65,10 @@ class AuthProvider extends ChangeNotifier {
       );
 
       await _saveUserData(user);
+      
+      // 서버에 사용자 정보 저장 (백그라운드에서 실행)
+      _authService.saveUserToServer(user);
+      
       _user = user;
       _isAuthenticated = true;
       

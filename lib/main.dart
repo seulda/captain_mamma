@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:developer' as developer;
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'providers/theme_provider.dart';
@@ -14,19 +14,20 @@ import 'utils/env_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // 환경 변수 로드
   try {
     await dotenv.load(fileName: '.env');
     EnvConfig.printConfigStatus();
   } catch (e) {
-    print('⚠️ .env 파일을 로드할 수 없습니다: $e');
-    print('📝 프로젝트 루트에 .env 파일을 생성하고 API 키를 설정해주세요.');
+    developer.log('⚠️ .env 파일을 로드할 수 없습니다: $e', name: 'EnvConfig');
+    developer.log('📝 프로젝트 루트에 .env 파일을 생성하고 API 키를 설정해주세요.',
+        name: 'EnvConfig');
   }
-  
+
   // Google Mobile Ads 초기화 (웹에서는 임시 비활성화)
   // await MobileAds.instance.initialize();
-  
+
   runApp(const MyApp());
 }
 
@@ -56,4 +57,4 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
-} 
+}

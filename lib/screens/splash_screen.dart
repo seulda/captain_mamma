@@ -20,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -49,13 +49,15 @@ class _SplashScreenState extends State<SplashScreen>
       // 최소 스플래시 표시 시간
       await Future.delayed(const Duration(seconds: 2));
 
-      // 위치 권한 확인
+      // Provider들을 미리 가져오기
+      if (!mounted) return;
       final locationProvider = context.read<LocationProvider>();
-      await locationProvider.requestLocationPermission();
 
-      // 인증 상태 확인
-      final authProvider = context.read<AuthProvider>();
-      // AuthProvider의 생성자에서 이미 체크하므로 추가 작업 불필요
+      // AuthProvider 초기화 (생성자에서 자동으로 인증 상태 확인)
+      context.read<AuthProvider>();
+
+      // 위치 권한 확인
+      await locationProvider.requestLocationPermission();
 
       // 메인 화면으로 이동
       if (mounted) {
@@ -88,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen>
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -100,32 +102,32 @@ class _SplashScreenState extends State<SplashScreen>
                   color: Color(0xFF2196F3),
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // 앱 제목
               Text(
                 '선장님 오늘의 메뉴는요?',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // 부제목
               Text(
                 '메뉴 고민 끝! 가까운 맛집을 찾아드려요',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white.withOpacity(0.8),
-                ),
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 48),
-              
+
               // 로딩 인디케이터
               const SizedBox(
                 width: 24,
@@ -141,4 +143,4 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
   }
-} 
+}

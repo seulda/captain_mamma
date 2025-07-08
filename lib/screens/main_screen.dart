@@ -87,7 +87,7 @@ class _MainScreenState extends State<MainScreen> {
               color: Theme.of(context).cardColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, -2),
                 ),
@@ -251,7 +251,7 @@ class _MainScreenState extends State<MainScreen> {
                                   },
                                   selectedColor: Theme.of(context)
                                       .primaryColor
-                                      .withOpacity(0.3),
+                                      .withValues(alpha: 0.3),
                                   checkmarkColor:
                                       Theme.of(context).primaryColor,
                                 );
@@ -285,7 +285,7 @@ class _MainScreenState extends State<MainScreen> {
                                   },
                                   selectedColor: Theme.of(context)
                                       .primaryColor
-                                      .withOpacity(0.3),
+                                      .withValues(alpha: 0.3),
                                   checkmarkColor:
                                       Theme.of(context).primaryColor,
                                 );
@@ -312,12 +312,12 @@ class _MainScreenState extends State<MainScreen> {
                                 decoration: BoxDecoration(
                                   color: Theme.of(context)
                                       .primaryColor
-                                      .withOpacity(0.1),
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                     color: Theme.of(context)
                                         .primaryColor
-                                        .withOpacity(0.3),
+                                        .withValues(alpha: 0.3),
                                   ),
                                 ),
                                 child: Text(
@@ -397,11 +397,14 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     // TODO: 검색 결과 화면으로 이동 (추후 구현)
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${restaurantProvider.restaurants.length}개의 맛집을 찾았습니다!'),
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text('${restaurantProvider.restaurants.length}개의 맛집을 찾았습니다!'),
+        ),
+      );
+    }
   }
 
   void _selectRandomRestaurant() {

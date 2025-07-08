@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../utils/router.dart';
 
@@ -163,7 +162,6 @@ class ErrorScreen extends StatelessWidget {
         );
         
       case ErrorType.general:
-      default:
         return ErrorData(
           icon: Icons.error_outline,
           title: '오류 발생',

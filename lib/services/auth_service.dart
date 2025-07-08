@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 
 class AuthService {
   final Dio _dio = Dio();
-  
+
   // TODO: 실제 API 엔드포인트로 변경
   static const String baseUrl = 'https://api.captain-menu.com';
 
@@ -19,7 +20,7 @@ class AuthService {
       final response = await _dio.post('/auth/user', data: user.toJson());
       return response.statusCode == 200;
     } catch (e) {
-      print('사용자 정보 저장 실패: $e');
+      debugPrint('사용자 정보 저장 실패: $e');
       return false;
     }
   }
@@ -33,7 +34,7 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('사용자 정보 가져오기 실패: $e');
+      debugPrint('사용자 정보 가져오기 실패: $e');
       return null;
     }
   }
@@ -44,7 +45,7 @@ class AuthService {
       final response = await _dio.delete('/auth/user/$userId');
       return response.statusCode == 200;
     } catch (e) {
-      print('사용자 삭제 실패: $e');
+      debugPrint('사용자 삭제 실패: $e');
       return false;
     }
   }
@@ -55,14 +56,14 @@ class AuthService {
       final response = await _dio.post('/auth/refresh', data: {
         'refreshToken': refreshToken,
       });
-      
+
       if (response.statusCode == 200) {
         return response.data['accessToken'];
       }
       return null;
     } catch (e) {
-      print('토큰 갱신 실패: $e');
+      debugPrint('토큰 갱신 실패: $e');
       return null;
     }
   }
-} 
+}

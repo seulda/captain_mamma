@@ -5,17 +5,17 @@ class AppTheme {
   static const Color primaryColor = Color(0xFF2196F3);
   static const Color primaryColorDark = Color(0xFF1976D2);
   static const Color primaryColorLight = Color(0xFF64B5F6);
-  
+
   // 라이트 모드 컬러
   static const Color lightBackground = Color(0xFFFFFFFF);
   static const Color lightSurface = Color(0xFFF5F5F5);
   static const Color lightCardColor = Color(0xFFFFFFFF);
-  
+
   // 다크 모드 컬러
   static const Color darkBackground = Color(0xFF121212);
   static const Color darkSurface = Color(0xFF1E1E1E);
   static const Color darkCardColor = Color(0xFF2C2C2C);
-  
+
   // 텍스트 컬러
   static const Color lightTextPrimary = Color(0xFF212121);
   static const Color lightTextSecondary = Color(0xFF757575);
@@ -205,7 +205,9 @@ class AppTheme {
   static MaterialColor createMaterialColor(Color color) {
     List strengths = <double>[.05];
     Map<int, Color> swatch = {};
-    final int r = color.red, g = color.green, b = color.blue;
+    final int r = (color.r * 255.0).round() & 0xff,
+        g = (color.g * 255.0).round() & 0xff,
+        b = (color.b * 255.0).round() & 0xff;
 
     for (int i = 1; i < 10; i++) {
       strengths.add(0.1 * i);
@@ -219,6 +221,6 @@ class AppTheme {
         1,
       );
     }
-    return MaterialColor(color.value, swatch);
+    return MaterialColor(color.toARGB32(), swatch);
   }
-} 
+}

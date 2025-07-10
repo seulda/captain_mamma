@@ -162,21 +162,40 @@ class _MainScreenState extends State<MainScreen> {
       // 플로팅 액션 버튼 (랜덤 선택)
       floatingActionButton: FloatingActionButton(
         onPressed: _selectRandomRestaurant,
-        child: const Icon(Icons.casino),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: const Icon(
+          Icons.casino,
+          size: 64,
+          color: Color(0xFFE57373),
+        ),
       ),
 
       // 하단 탭바
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        iconSize: 32,
+        showSelectedLabels: false, // 선택된 라벨 숨기기
+        showUnselectedLabels: false, // 선택되지 않은 라벨 숨기기
+        onTap: (index) {
+          if (index == 0) {
+            // 홈 탭 - 현재 화면이므로 인덱스만 변경
+            setState(() => _currentIndex = index);
+          } else if (index == 1) {
+            // 설정 탭 - 설정 화면으로 이동 (홈 탭 상태 유지)
+            AppNavigation.toSettings();
+            // 설정 화면으로 이동 후에도 홈 탭이 선택된 상태로 유지
+            setState(() => _currentIndex = 0);
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: '홈',
+            label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
-            label: '설정',
+            label: '',
           ),
         ],
       ),

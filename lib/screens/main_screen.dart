@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../models/filter_model.dart';
 import '../providers/location_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/restaurant_provider.dart';
 import '../utils/router.dart';
+import '../utils/env_config.dart';
+
+// 웹 플랫폼에서만 JavaScript 함수 호출을 위한 conditional import
+import 'dart:js' as js show context;
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,18 +22,125 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  GoogleMapController? _mapController;
+  final Set<Marker> _markers = {};
+
+  // 웹에서 Google Maps API 로드 상태 관리
+  bool _isGoogleMapsLoaded = false;
+
+  // 기본 지도 중심 (서울역)
+  static const CameraPosition _defaultLocation = CameraPosition(
+    target: LatLng(37.5565, 126.9720),
+    zoom: 14.0,
+  );
 
   @override
   void initState() {
     super.initState();
+    _initializeWebGoogleMaps();
     _initializeLocation();
+  }
+
+  /// 웹 플랫폼에서 Google Maps API 로드 (간단한 방법)
+  void _initializeWebGoogleMaps() async {
+    if (kIsWeb) {
+      final apiKey = EnvConfig.googleMapsApiKey;
+      if (apiKey.isNotEmpty) {
+        try {
+          debugPrint('🔄 Google Maps API 로드를 시작합니다...');
+
+          // JavaScript의 window.loadGoogleMapsAPI 함수 호출 (단순)
+          js.context.callMethod('loadGoogleMapsAPI', [apiKey]);
+
+          // 간단하게 2초 기다린 후 지도 표시 (대부분의 경우 충분함)
+          await Future.delayed(const Duration(seconds: 2));
+
+          setState(() {
+            _isGoogleMapsLoaded = true;
+          });
+
+          debugPrint('✅ 웹에서 지도 표시를 시작합니다.');
+        } catch (e) {
+          debugPrint('❌ 웹에서 Google Maps API 로드 실패: $e');
+          // 에러가 있어도 일단 지도를 표시해봄
+          setState(() {
+            _isGoogleMapsLoaded = true;
+          });
+        }
+      } else {
+        debugPrint('❌ 웹용 Google Maps API 키가 설정되지 않았습니다.');
+        debugPrint('💡 해결 방법: ./scripts/run_web.bat으로 실행하세요.');
+        // API 키가 없어도 일단 지도 영역은 표시
+        setState(() {
+          _isGoogleMapsLoaded = true;
+        });
+      }
+    } else {
+      // 웹이 아닌 플랫폼에서는 바로 로드됨으로 처리
+      setState(() {
+        _isGoogleMapsLoaded = true;
+      });
+    }
   }
 
   Future<void> _initializeLocation() async {
     final locationProvider = context.read<LocationProvider>();
     if (locationProvider.hasLocationPermission) {
       await locationProvider.getCurrentLocation();
+      // 위치 획득 후 지도 중심 이동
+      _moveMapToCurrentLocation();
     }
+  }
+
+  // Google Maps 관련 메서드들
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+    _moveMapToCurrentLocation();
+  }
+
+  void _onMapTapped(LatLng position) {
+    // 지도 탭 시 처리 (필요 시 구현)
+    debugPrint('Map tapped at: ${position.latitude}, ${position.longitude}');
+  }
+
+  void _moveMapToCurrentLocation() {
+    final locationProvider = context.read<LocationProvider>();
+    if (_mapController != null && locationProvider.currentLocation != null) {
+      final location = locationProvider.currentLocation!;
+      _mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(location.latitude, location.longitude),
+            zoom: 16.0,
+          ),
+        ),
+      );
+    }
+  }
+
+  void _addRestaurantMarkers() {
+    final restaurantProvider = context.read<RestaurantProvider>();
+    setState(() {
+      _markers.clear();
+      for (var restaurant in restaurantProvider.restaurants) {
+        _markers.add(
+          Marker(
+            markerId: MarkerId(restaurant.id),
+            position: LatLng(restaurant.latitude, restaurant.longitude),
+            infoWindow: InfoWindow(
+              title: restaurant.name,
+              snippet: restaurant.address,
+              onTap: () {
+                AppNavigation.toRestaurantDetail(restaurant.id);
+              },
+            ),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueRed,
+            ),
+          ),
+        );
+      }
+    });
   }
 
   @override
@@ -44,39 +157,51 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: Column(
         children: [
-          // 지도 영역 (임시)
+          // Google Maps 영역
           Expanded(
-            child: Container(
-              width: double.infinity,
-              color: Colors.grey[200],
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.map,
-                      size: 64,
-                      color: Colors.grey,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      '지도 영역',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey,
+            child: Consumer<LocationProvider>(
+              builder: (context, locationProvider, child) {
+                // 웹에서 Google Maps API 로드 대기
+                if (kIsWeb && !_isGoogleMapsLoaded) {
+                  return Container(
+                    color: Colors.grey[100],
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                            '🗺️ Google Maps를 로드하는 중...',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            '잠시만 기다려주세요',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Google Maps 연동 예정',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  );
+                }
+
+                return GoogleMap(
+                  onMapCreated: _onMapCreated,
+                  initialCameraPosition: _defaultLocation,
+                  markers: _markers,
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: true,
+                  mapType: MapType.normal,
+                  onTap: _onMapTapped,
+                  compassEnabled: true,
+                  rotateGesturesEnabled: true,
+                  scrollGesturesEnabled: true,
+                  tiltGesturesEnabled: true,
+                  zoomGesturesEnabled: true,
+                  zoomControlsEnabled: false,
+                );
+              },
             ),
           ),
 
@@ -415,12 +540,20 @@ class _MainScreenState extends State<MainScreen> {
       return;
     }
 
-    // TODO: 검색 결과 화면으로 이동 (추후 구현)
+    // 검색 결과를 지도에 마커로 표시
+    _addRestaurantMarkers();
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content:
               Text('${restaurantProvider.restaurants.length}개의 맛집을 찾았습니다!'),
+          action: SnackBarAction(
+            label: '목록 보기',
+            onPressed: () {
+              // TODO: 검색 결과 리스트 화면으로 이동
+            },
+          ),
         ),
       );
     }

@@ -3,17 +3,38 @@ import 'dart:developer' as developer;
 
 /// 환경 변수 관리 클래스
 class EnvConfig {
-  // API Keys
-  static String get kakaoApiKey => dotenv.env['KAKAO_API_KEY'] ?? '';
-  static String get naverClientId => dotenv.env['NAVER_CLIENT_ID'] ?? '';
-  static String get naverClientSecret =>
-      dotenv.env['NAVER_CLIENT_SECRET'] ?? '';
-  static String get googleMapsApiKey => dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+  // dart-define을 통한 환경 변수 (웹에서도 안전하게 사용 가능)
+  static const String googleMapsApiKey = String.fromEnvironment(
+    'GOOGLE_MAPS_API_KEY',
+    defaultValue: '', // 기본값: 빈 문자열
+  );
 
-  // App Configuration
-  static String get appVersion => dotenv.env['APP_VERSION'] ?? '1.0.0';
-  static bool get isDebugMode =>
-      dotenv.env['DEBUG_MODE']?.toLowerCase() == 'true';
+  static const String kakaoApiKey = String.fromEnvironment(
+    'KAKAO_API_KEY',
+    defaultValue: '',
+  );
+
+  static const String naverClientId = String.fromEnvironment(
+    'NAVER_CLIENT_ID',
+    defaultValue: '',
+  );
+
+  static const String naverClientSecret = String.fromEnvironment(
+    'NAVER_CLIENT_SECRET',
+    defaultValue: '',
+  );
+
+  // API 키 유효성 검사
+  static bool get isGoogleMapsApiKeyValid => googleMapsApiKey.isNotEmpty;
+  static bool get isKakaoApiKeyValid => kakaoApiKey.isNotEmpty;
+  static bool get isNaverConfigValid =>
+      naverClientId.isNotEmpty && naverClientSecret.isNotEmpty;
+
+  // 개발 모드 확인
+  static const bool isDebugMode =
+      bool.fromEnvironment('DEBUG_MODE', defaultValue: false);
+  static const String appVersion =
+      String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
 
   // Database Configuration (추후 필요시 사용)
   static String get databaseUrl => dotenv.env['DATABASE_URL'] ?? '';

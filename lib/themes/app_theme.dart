@@ -38,7 +38,6 @@ class AppTheme {
         color: lightTextPrimary,
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        fontFamily: 'NotoSansKR',
       ),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -59,7 +58,6 @@ class AppTheme {
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          fontFamily: 'NotoSansKR',
         ),
       ),
     ),
@@ -91,23 +89,19 @@ class AppTheme {
         fontSize: 24,
         fontWeight: FontWeight.bold,
         color: lightTextPrimary,
-        fontFamily: 'NotoSansKR',
       ),
       headlineMedium: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: lightTextPrimary,
-        fontFamily: 'NotoSansKR',
       ),
       bodyLarge: TextStyle(
         fontSize: 16,
         color: lightTextPrimary,
-        fontFamily: 'NotoSansKR',
       ),
       bodyMedium: TextStyle(
         fontSize: 14,
         color: lightTextSecondary,
-        fontFamily: 'NotoSansKR',
       ),
     ),
   );
@@ -128,7 +122,6 @@ class AppTheme {
         color: darkTextPrimary,
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        fontFamily: 'NotoSansKR',
       ),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -149,7 +142,6 @@ class AppTheme {
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          fontFamily: 'NotoSansKR',
         ),
       ),
     ),
@@ -181,23 +173,19 @@ class AppTheme {
         fontSize: 24,
         fontWeight: FontWeight.bold,
         color: darkTextPrimary,
-        fontFamily: 'NotoSansKR',
       ),
       headlineMedium: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: darkTextPrimary,
-        fontFamily: 'NotoSansKR',
       ),
       bodyLarge: TextStyle(
         fontSize: 16,
         color: darkTextPrimary,
-        fontFamily: 'NotoSansKR',
       ),
       bodyMedium: TextStyle(
         fontSize: 14,
         color: darkTextSecondary,
-        fontFamily: 'NotoSansKR',
       ),
     ),
   );

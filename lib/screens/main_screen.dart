@@ -222,14 +222,17 @@ class _MainScreenState extends State<MainScreen> {
           Positioned(
             top: 20,
             right: 20,
-            child: FloatingActionButton(
-              onPressed: () => AppNavigation.toSettings(),
-              backgroundColor: Colors.white,
-              elevation: 4,
-              mini: true,
-              child: const Icon(
-                Icons.menu,
-                color: Colors.black87,
+            child: GestureDetector(
+              onTap: () {}, // 터치 이벤트 격리 (지도로 전파 방지)
+              child: FloatingActionButton(
+                onPressed: () => AppNavigation.toSettings(),
+                backgroundColor: Colors.white,
+                elevation: 4,
+                mini: true,
+                child: const Icon(
+                  Icons.menu,
+                  color: Colors.black87,
+                ),
               ),
             ),
           ),
@@ -239,87 +242,90 @@ class _MainScreenState extends State<MainScreen> {
             bottom: 70, // 광고 배너(50px) + 여백(20px)
             left: 20,
             right: 20,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // 종류 선택 버튼
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      onPressed: _showFilterDialog,
-                      icon: const Icon(Icons.filter_list),
-                      label: const Text('종류 선택'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.6),
-                        foregroundColor: Colors.black87,
-                        elevation: 2,
+            child: GestureDetector(
+              onTap: () {}, // 터치 이벤트 격리 (지도로 전파 방지)
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // 종류 선택 버튼
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        onPressed: _showFilterDialog,
+                        icon: const Icon(Icons.filter_list),
+                        label: const Text('종류 선택'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.6),
+                          foregroundColor: Colors.black87,
+                          elevation: 2,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
+                    const SizedBox(width: 8),
 
-                  // 검색 반경 드롭다운
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(8),
-                      border:
-                          Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                    ),
-                    child: Consumer<RestaurantProvider>(
-                      builder: (context, provider, child) {
-                        return DropdownButton<double>(
-                          value: provider.searchRadius,
-                          underline: const SizedBox(),
-                          items: const [
-                            DropdownMenuItem(value: 0.5, child: Text('500m')),
-                            DropdownMenuItem(value: 1.0, child: Text('1km')),
-                            DropdownMenuItem(value: 2.0, child: Text('2km')),
-                            DropdownMenuItem(value: 3.0, child: Text('3km')),
-                            DropdownMenuItem(value: 4.0, child: Text('4km')),
-                            DropdownMenuItem(value: 5.0, child: Text('5km')),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              provider.setSearchRadius(value);
-                            }
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // 검색 버튼
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: _searchRestaurants,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context)
-                            .primaryColor
-                            .withValues(alpha: 0.6),
-                        foregroundColor: Colors.white,
-                        elevation: 2,
+                    // 검색 반경 드롭다운
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: Colors.grey.withValues(alpha: 0.3)),
                       ),
-                      child: const Text('검색'),
+                      child: Consumer<RestaurantProvider>(
+                        builder: (context, provider, child) {
+                          return DropdownButton<double>(
+                            value: provider.searchRadius,
+                            underline: const SizedBox(),
+                            items: const [
+                              DropdownMenuItem(value: 0.5, child: Text('500m')),
+                              DropdownMenuItem(value: 1.0, child: Text('1km')),
+                              DropdownMenuItem(value: 2.0, child: Text('2km')),
+                              DropdownMenuItem(value: 3.0, child: Text('3km')),
+                              DropdownMenuItem(value: 4.0, child: Text('4km')),
+                              DropdownMenuItem(value: 5.0, child: Text('5km')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                provider.setSearchRadius(value);
+                              }
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+
+                    // 검색 버튼
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: _searchRestaurants,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context)
+                              .primaryColor
+                              .withValues(alpha: 0.6),
+                          foregroundColor: Colors.white,
+                          elevation: 2,
+                        ),
+                        child: const Text('검색'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -328,26 +334,29 @@ class _MainScreenState extends State<MainScreen> {
           Positioned(
             bottom: 170, // 플로팅 컨트롤 영역(bottom: 70 + height + 여백) 바로 위
             right: 20,
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.6),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+            child: GestureDetector(
+              onTap: () {}, // 터치 이벤트 격리 (지도로 전파 방지)
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  onPressed: _selectRandomRestaurant,
+                  icon: const Icon(
+                    Icons.restaurant,
+                    color: Color(0xFFE57373),
+                    size: 28,
                   ),
-                ],
-              ),
-              child: IconButton(
-                onPressed: _selectRandomRestaurant,
-                icon: const Icon(
-                  Icons.restaurant,
-                  color: Color(0xFFE57373),
-                  size: 28,
                 ),
               ),
             ),

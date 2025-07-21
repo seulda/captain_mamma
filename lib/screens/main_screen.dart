@@ -10,7 +10,7 @@ import '../providers/restaurant_provider.dart';
 import '../utils/router.dart';
 import '../utils/env_config.dart';
 
-// 웹 플랫폼에서만 JavaScript 함수 호출을 위한 conditional import
+// ignore: avoid_web_libraries_in_flutter
 import 'dart:js' as js show context;
 
 class MainScreen extends StatefulWidget {
@@ -21,12 +21,14 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
   GoogleMapController? _mapController;
   final Set<Marker> _markers = {};
 
   // 웹에서 Google Maps API 로드 상태 관리
   bool _isGoogleMapsLoaded = false;
+
+  // 모달 열림 상태 (지도 제스처 제어용)
+  bool _isModalOpen = false;
 
   // 기본 지도 중심 (서울역)
   static const CameraPosition _defaultLocation = CameraPosition(
@@ -44,7 +46,7 @@ class _MainScreenState extends State<MainScreen> {
   /// 웹 플랫폼에서 Google Maps API 로드 (간단한 방법)
   void _initializeWebGoogleMaps() async {
     if (kIsWeb) {
-      final apiKey = EnvConfig.googleMapsApiKey;
+      const apiKey = EnvConfig.googleMapsApiKey;
       if (apiKey.isNotEmpty) {
         try {
           debugPrint('🔄 Google Maps API 로드를 시작합니다...');
@@ -146,96 +148,143 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('🍽️ 선장님 오늘의 메뉴는요?'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => AppNavigation.toSettings(),
-          ),
-        ],
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          // Google Maps 영역
-          Expanded(
-            child: Consumer<LocationProvider>(
-              builder: (context, locationProvider, child) {
-                // 웹에서 Google Maps API 로드 대기
-                if (kIsWeb && !_isGoogleMapsLoaded) {
-                  return Container(
-                    color: Colors.grey[100],
-                    child: const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text(
-                            '🗺️ Google Maps를 로드하는 중...',
-                            style: TextStyle(fontSize: 16),
+          // 메인 컨텐츠
+          // 지도와 광고영역을 분리한 Column 구조
+          Column(
+            children: [
+              // Google Maps 영역
+              Expanded(
+                child: Consumer<LocationProvider>(
+                  builder: (context, locationProvider, child) {
+                    // 웹에서 Google Maps API 로드 대기
+                    if (kIsWeb && !_isGoogleMapsLoaded) {
+                      return Container(
+                        color: Colors.grey[100],
+                        child: const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text(
+                                '🗺️ Google Maps를 로드하는 중...',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                '잠시만 기다려주세요',
+                                style:
+                                    TextStyle(fontSize: 14, color: Colors.grey),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            '잠시만 기다려주세요',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
+                        ),
+                      );
+                    }
 
-                return GoogleMap(
-                  onMapCreated: _onMapCreated,
-                  initialCameraPosition: _defaultLocation,
-                  markers: _markers,
-                  myLocationEnabled: true,
-                  myLocationButtonEnabled: true,
-                  mapType: MapType.normal,
-                  onTap: _onMapTapped,
-                  compassEnabled: true,
-                  rotateGesturesEnabled: true,
-                  scrollGesturesEnabled: true,
-                  tiltGesturesEnabled: true,
-                  zoomGesturesEnabled: true,
-                  zoomControlsEnabled: false,
-                );
-              },
+                    return GoogleMap(
+                      onMapCreated: _onMapCreated,
+                      initialCameraPosition: _defaultLocation,
+                      markers: _markers,
+                      myLocationEnabled: true,
+                      myLocationButtonEnabled: true,
+                      mapType: MapType.normal,
+                      onTap: _onMapTapped,
+                      compassEnabled: !_isModalOpen,
+                      rotateGesturesEnabled: !_isModalOpen,
+                      scrollGesturesEnabled: !_isModalOpen,
+                      tiltGesturesEnabled: !_isModalOpen,
+                      zoomGesturesEnabled: !_isModalOpen,
+                      zoomControlsEnabled: false,
+                    );
+                  },
+                ),
+              ),
+
+              // 광고 배너 영역 (페이지 하단 고정)
+              Container(
+                height: 50,
+                width: double.infinity,
+                color: Colors.amber[100],
+                child: const Center(
+                  child: Text(
+                    '광고 배너 영역',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // 우측 상단 햄버거 메뉴 버튼
+          Positioned(
+            top: 20,
+            right: 20,
+            child: FloatingActionButton(
+              onPressed: () => AppNavigation.toSettings(),
+              backgroundColor: Colors.white,
+              elevation: 4,
+              mini: true,
+              child: const Icon(
+                Icons.menu,
+                color: Colors.black87,
+              ),
             ),
           ),
 
-          // 필터 및 검색 영역
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // 필터 선택 버튼
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _showFilterDialog,
-                        icon: const Icon(Icons.filter_list),
-                        label: const Text('필터 선택'),
+          // 하단 플로팅 컨트롤 영역 (광고 영역 위, 지도 내 하단)
+          Positioned(
+            bottom: 70, // 광고 배너(50px) + 여백(20px)
+            left: 20,
+            right: 20,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // 종류 선택 버튼
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: _showFilterDialog,
+                      icon: const Icon(Icons.filter_list),
+                      label: const Text('종류 선택'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.6),
+                        foregroundColor: Colors.black87,
+                        elevation: 2,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    // 검색 반경 드롭다운
-                    Consumer<RestaurantProvider>(
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 검색 반경 드롭다운
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(8),
+                      border:
+                          Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                    ),
+                    child: Consumer<RestaurantProvider>(
                       builder: (context, provider, child) {
                         return DropdownButton<double>(
                           value: provider.searchRadius,
+                          underline: const SizedBox(),
                           items: const [
                             DropdownMenuItem(value: 0.5, child: Text('500m')),
                             DropdownMenuItem(value: 1.0, child: Text('1km')),
@@ -252,75 +301,56 @@ class _MainScreenState extends State<MainScreen> {
                         );
                       },
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                // 검색 버튼
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _searchRestaurants,
-                    child: const Text('근처 맛집 찾기'),
                   ),
-                ),
-              ],
-            ),
-          ),
+                  const SizedBox(width: 8),
 
-          // 광고 배너 영역 (임시)
-          Container(
-            height: 50,
-            width: double.infinity,
-            color: Colors.amber[100],
-            child: const Center(
-              child: Text(
-                '광고 배너 영역',
-                style: TextStyle(color: Colors.grey),
+                  // 검색 버튼
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: _searchRestaurants,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context)
+                            .primaryColor
+                            .withValues(alpha: 0.6),
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                      ),
+                      child: const Text('검색'),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
 
-      // 플로팅 액션 버튼 (랜덤 선택)
-      floatingActionButton: FloatingActionButton(
-        onPressed: _selectRandomRestaurant,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: const Icon(
-          Icons.casino,
-          size: 64,
-          color: Color(0xFFE57373),
-        ),
-      ),
-
-      // 하단 탭바
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        iconSize: 32,
-        showSelectedLabels: false, // 선택된 라벨 숨기기
-        showUnselectedLabels: false, // 선택되지 않은 라벨 숨기기
-        onTap: (index) {
-          if (index == 0) {
-            // 홈 탭 - 현재 화면이므로 인덱스만 변경
-            setState(() => _currentIndex = index);
-          } else if (index == 1) {
-            // 설정 탭 - 설정 화면으로 이동 (홈 탭 상태 유지)
-            AppNavigation.toSettings();
-            // 설정 화면으로 이동 후에도 홈 탭이 선택된 상태로 유지
-            setState(() => _currentIndex = 0);
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: '',
+          // 우측 하단 수저포크 버튼 (랜덤 선택) - 플로팅 컨트롤 영역 바로 위쪽
+          Positioned(
+            bottom: 170, // 플로팅 컨트롤 영역(bottom: 70 + height + 여백) 바로 위
+            right: 20,
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.6),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                onPressed: _selectRandomRestaurant,
+                icon: const Icon(
+                  Icons.restaurant,
+                  color: Color(0xFFE57373),
+                  size: 28,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -328,186 +358,241 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _showFilterDialog() {
+    setState(() {
+      _isModalOpen = true; // 모달 열림 - 지도 제스처 비활성화
+    });
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent, // 모달 배경을 투명하게
+      barrierColor: Colors.black.withValues(alpha: 0.7), // 어두운 배경
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 헤더
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '필터 선택',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
+      builder: (context) => Stack(
+        children: [
+          // 상단 투명 영역 (터치 시 모달 닫기)
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.5,
+              color: Colors.transparent,
+            ),
+          ),
 
-                const SizedBox(height: 16),
-
-                // 필터 선택 내용
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    child: Consumer<RestaurantProvider>(
-                      builder: (context, provider, child) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+          // 하단 모달 영역
+          DraggableScrollableSheet(
+            initialChildSize: 0.5, // 화면 절반만 차지
+            minChildSize: 0.3,
+            maxChildSize: 0.8, // 최대 크기도 줄여서 상단 여백 확보
+            builder: (context, scrollController) {
+              return AbsorbPointer(
+                absorbing: false, // 모달 내부 터치는 허용
+                child: Listener(
+                  onPointerSignal: (event) {
+                    // 스크롤 이벤트 차단
+                    return;
+                  },
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white, // 하단 절반만 흰색 배경
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 헤더
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // 1번 필터: 음식 종류
                             Text(
-                              '음식 종류',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              '종류 선택',
+                              style: Theme.of(context).textTheme.headlineMedium,
                             ),
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: FoodType.values.map((foodType) {
-                                final isSelected = provider.filter
-                                    .isFoodTypeSelected(foodType);
-                                return FilterChip(
-                                  label: Text(foodType.displayName),
-                                  selected: isSelected,
-                                  onSelected: (selected) {
-                                    provider.toggleFoodType(foodType);
-                                  },
-                                  selectedColor: Theme.of(context)
-                                      .primaryColor
-                                      .withValues(alpha: 0.3),
-                                  checkmarkColor:
-                                      Theme.of(context).primaryColor,
-                                );
-                              }).toList(),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close),
                             ),
-
-                            const SizedBox(height: 24),
-
-                            // 2번 필터: 메뉴 타입
-                            Text(
-                              '메뉴 타입',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: MenuType.values.map((menuType) {
-                                final isSelected = provider.filter
-                                    .isMenuTypeSelected(menuType);
-                                return FilterChip(
-                                  label: Text(menuType.displayName),
-                                  selected: isSelected,
-                                  onSelected: (selected) {
-                                    provider.toggleMenuType(menuType);
-                                  },
-                                  selectedColor: Theme.of(context)
-                                      .primaryColor
-                                      .withValues(alpha: 0.3),
-                                  checkmarkColor:
-                                      Theme.of(context).primaryColor,
-                                );
-                              }).toList(),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // 현재 선택된 필터 표시
-                            if (provider.filter.hasActiveFilters) ...[
-                              Text(
-                                '선택된 필터',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context)
-                                      .primaryColor
-                                      .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Theme.of(context)
-                                        .primaryColor
-                                        .withValues(alpha: 0.3),
-                                  ),
-                                ),
-                                child: Text(
-                                  provider.filter.filterText,
-                                  style: TextStyle(
-                                    color: Theme.of(context).primaryColor,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                            ],
                           ],
-                        );
-                      },
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // 종류 선택 내용
+                        Expanded(
+                          child: NotificationListener<ScrollNotification>(
+                            onNotification: (notification) =>
+                                true, // 스크롤 알림 전파 차단
+                            child: SingleChildScrollView(
+                              controller: scrollController,
+                              physics:
+                                  const BouncingScrollPhysics(), // 부드러운 스크롤
+                              child: Consumer<RestaurantProvider>(
+                                builder: (context, provider, child) {
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // 1번 필터: 음식 종류
+                                      Text(
+                                        '음식 종류',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children:
+                                            FoodType.values.map((foodType) {
+                                          final isSelected = provider.filter
+                                              .isFoodTypeSelected(foodType);
+                                          return FilterChip(
+                                            label: Text(foodType.displayName),
+                                            selected: isSelected,
+                                            onSelected: (selected) {
+                                              provider.toggleFoodType(foodType);
+                                            },
+                                            selectedColor: Theme.of(context)
+                                                .primaryColor
+                                                .withValues(alpha: 0.3),
+                                            checkmarkColor:
+                                                Theme.of(context).primaryColor,
+                                          );
+                                        }).toList(),
+                                      ),
+
+                                      const SizedBox(height: 24),
+
+                                      // 2번 필터: 메뉴 타입
+                                      Text(
+                                        '메뉴 타입',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children:
+                                            MenuType.values.map((menuType) {
+                                          final isSelected = provider.filter
+                                              .isMenuTypeSelected(menuType);
+                                          return FilterChip(
+                                            label: Text(menuType.displayName),
+                                            selected: isSelected,
+                                            onSelected: (selected) {
+                                              provider.toggleMenuType(menuType);
+                                            },
+                                            selectedColor: Theme.of(context)
+                                                .primaryColor
+                                                .withValues(alpha: 0.3),
+                                            checkmarkColor:
+                                                Theme.of(context).primaryColor,
+                                          );
+                                        }).toList(),
+                                      ),
+
+                                      const SizedBox(height: 24),
+
+                                      // 현재 선택된 필터 표시
+                                      if (provider.filter.hasActiveFilters) ...[
+                                        Text(
+                                          '선택된 필터',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context)
+                                                .primaryColor
+                                                .withValues(alpha: 0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: Theme.of(context)
+                                                  .primaryColor
+                                                  .withValues(alpha: 0.3),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            provider.filter.filterText,
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .primaryColor,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                      ],
+
+                                      // 스크롤을 위한 추가 여백 (하단 버튼과 겹치지 않도록)
+                                      const SizedBox(height: 100),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // 하단 버튼들
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  context
+                                      .read<RestaurantProvider>()
+                                      .resetFilter();
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('초기화'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('적용'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-
-                // 하단 버튼들
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          context.read<RestaurantProvider>().resetFilter();
-                          Navigator.pop(context);
-                        },
-                        child: const Text('초기화'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('적용'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ],
       ),
-    );
+    ).then((_) {
+      // 모달 닫힘 - 지도 제스처 다시 활성화
+      setState(() {
+        _isModalOpen = false;
+      });
+    });
   }
 
   void _searchRestaurants() async {

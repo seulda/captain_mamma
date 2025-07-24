@@ -5,12 +5,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../models/filter_model.dart';
 import '../providers/location_provider.dart';
-import '../providers/auth_provider.dart';
 import '../providers/restaurant_provider.dart';
 import '../utils/router.dart';
-import '../utils/env_config.dart';
 import '../services/places_api_service.dart';
-import '../widgets/admob_banner.dart';
 
 // 플랫폼별 JavaScript interop은 services에서 처리
 
@@ -87,31 +84,6 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
     }
-  }
-
-  void _addRestaurantMarkers() {
-    final restaurantProvider = context.read<RestaurantProvider>();
-    setState(() {
-      _markers.clear();
-      for (var restaurant in restaurantProvider.restaurants) {
-        _markers.add(
-          Marker(
-            markerId: MarkerId(restaurant.id),
-            position: LatLng(restaurant.latitude, restaurant.longitude),
-            infoWindow: InfoWindow(
-              title: restaurant.name,
-              snippet: restaurant.address,
-              onTap: () {
-                AppNavigation.toRestaurantDetail(restaurant.id);
-              },
-            ),
-            icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueRed,
-            ),
-          ),
-        );
-      }
-    });
   }
 
   @override
@@ -712,7 +684,7 @@ class _MainScreenState extends State<MainScreen> {
             Text(
                 '위치 권한: ${locationProvider.hasLocationPermission ? "허용됨" : "거부됨"}'),
             Text(
-                '현재 위치: ${locationProvider.currentLocation?.latitude?.toStringAsFixed(4) ?? "없음"}, ${locationProvider.currentLocation?.longitude?.toStringAsFixed(4) ?? "없음"}'),
+                '현재 위치: ${locationProvider.currentLocation?.latitude.toStringAsFixed(4) ?? "없음"}, ${locationProvider.currentLocation?.longitude.toStringAsFixed(4) ?? "없음"}'),
             if (locationProvider.currentLocation != null)
               Text('주소: ${locationProvider.currentLocation!.address}'),
             if (locationProvider.errorMessage != null) ...[
@@ -755,114 +727,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  // 기존 복잡한 다이얼로그 (백업용)
-  void _showLocationDialogOld(BuildContext context) {
-    final locationProvider = context.read<LocationProvider>();
-
-    // 디버그 정보 출력
-    debugPrint('🔍 위치 다이얼로그 열기:');
-    debugPrint('  - 위치 권한: ${locationProvider.hasLocationPermission}');
-    debugPrint(
-        '  - 현재 위치: ${locationProvider.currentLocation?.latitude}, ${locationProvider.currentLocation?.longitude}');
-    debugPrint('  - 로딩 중: ${locationProvider.isLoading}');
-    debugPrint('  - 에러 메시지: ${locationProvider.errorMessage}');
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('📍 위치 서비스'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!locationProvider.hasLocationPermission) ...[
-                const Text('위치 권한이 필요합니다.'),
-                const SizedBox(height: 8),
-                const Text('현재 위치를 찾아 주변 맛집을 검색하려면 위치 권한을 허용해주세요.'),
-              ] else if (locationProvider.currentLocation == null) ...[
-                const Text('현재 위치를 가져오는 중입니다...'),
-                const SizedBox(height: 8),
-                if (locationProvider.isLoading)
-                  const CircularProgressIndicator()
-                else
-                  const Text('위치를 가져올 수 없습니다. 다시 시도해주세요.'),
-              ] else ...[
-                const Text('현재 위치:'),
-                const SizedBox(height: 8),
-                Text(locationProvider.currentLocation!.address),
-                const SizedBox(height: 8),
-                Text(
-                    '위도: ${locationProvider.currentLocation!.latitude.toStringAsFixed(4)}'),
-                Text(
-                    '경도: ${locationProvider.currentLocation!.longitude.toStringAsFixed(4)}'),
-              ],
-              if (locationProvider.errorMessage != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.red[50],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '⚠️ ${locationProvider.errorMessage}',
-                    style: TextStyle(color: Colors.red[700]),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            if (!locationProvider.hasLocationPermission) ...[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('취소'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  final granted =
-                      await locationProvider.requestLocationPermission();
-                  if (granted) {
-                    _moveMapToCurrentLocation();
-                  }
-                },
-                child: const Text('권한 허용'),
-              ),
-            ] else if (locationProvider.currentLocation == null) ...[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('닫기'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  await locationProvider.getCurrentLocation();
-                  _moveMapToCurrentLocation();
-                },
-                child: const Text('다시 시도'),
-              ),
-            ] else ...[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('닫기'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  await locationProvider.getCurrentLocation();
-                  _moveMapToCurrentLocation();
-                },
-                child: const Text('위치 새로고침'),
-              ),
-            ],
-          ],
-        );
-      },
     );
   }
 }

@@ -138,7 +138,7 @@ class EnvConfig {
           name: 'EnvConfig');
       developer.log('Current Banner Ad Unit: ${getBannerAdUnitId()}',
           name: 'EnvConfig');
-      developer.log('Using Test Ads: ${isDebugMode}', name: 'EnvConfig');
+      developer.log('Using Test Ads: $isDebugMode', name: 'EnvConfig');
 
       developer.log('App Version: $appVersion', name: 'EnvConfig');
       developer.log('Debug Mode: $isDebugMode', name: 'EnvConfig');

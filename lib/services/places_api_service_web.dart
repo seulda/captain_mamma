@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 // 웹에서만 사용하는 JavaScript interop
-// ignore: avoid_web_libraries_in_flutter
+// ignore: avoid_web_libraries_in_flutter, deprecated_member_use
 import 'dart:js' as js;
-// ignore: avoid_web_libraries_in_flutter
+// ignore: avoid_web_libraries_in_flutter, deprecated_member_use
 import 'dart:js_util' as js_util;
 
 /// 웹 플랫폼용 Places API 구현 (JavaScript interop 사용)

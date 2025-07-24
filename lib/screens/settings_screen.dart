@@ -27,10 +27,10 @@ class SettingsScreen extends StatelessWidget {
               return Card(
                 child: ListTile(
                   leading: const Icon(Icons.account_circle),
-                  title: Text(authProvider.isAuthenticated 
+                  title: Text(authProvider.isAuthenticated
                       ? authProvider.user?.name ?? '사용자'
                       : '로그인되지 않음'),
-                  subtitle: Text(authProvider.isAuthenticated 
+                  subtitle: Text(authProvider.isAuthenticated
                       ? '${authProvider.user?.loginProvider} 로그인'
                       : '로그인하여 더 많은 기능을 이용해보세요'),
                   trailing: authProvider.isAuthenticated
@@ -39,16 +39,16 @@ class SettingsScreen extends StatelessWidget {
                           onPressed: () => _showLogoutDialog(context),
                         )
                       : null,
-                  onTap: authProvider.isAuthenticated 
-                      ? null 
+                  onTap: authProvider.isAuthenticated
+                      ? null
                       : () => AppNavigation.toLogin(),
                 ),
               );
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // 테마 설정
           Card(
             child: Consumer<ThemeProvider>(
@@ -63,9 +63,9 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // 알림 설정 (플레이스홀더)
           Card(
             child: SwitchListTile(
@@ -78,9 +78,9 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // 위치 권한 관리 (플레이스홀더)
           Card(
             child: SwitchListTile(
@@ -93,9 +93,9 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // 앱 정보
           Card(
             child: Column(
@@ -135,7 +135,7 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // 광고 배너 영역 (플레이스홀더)
           const SizedBox(height: 32),
           Container(
@@ -177,4 +177,4 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-} 
+}

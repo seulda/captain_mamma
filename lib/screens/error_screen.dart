@@ -51,41 +51,41 @@ class ErrorScreen extends StatelessWidget {
                   color: Theme.of(context).colorScheme.error,
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // 에러 제목
               Text(
                 errorData.title,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // 에러 메시지
               Text(
                 errorData.message,
                 style: Theme.of(context).textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 48),
-              
+
               // 액션 버튼들
               ...errorData.actions.map((action) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: action.onPressed,
-                    child: Text(action.label),
-                  ),
-                ),
-              )),
-              
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: action.onPressed,
+                        child: Text(action.label),
+                      ),
+                    ),
+                  )),
+
               // 디버그 정보 (개발 모드에서만)
               if (error != null) ...[
                 const SizedBox(height: 24),
@@ -130,7 +130,7 @@ class ErrorScreen extends StatelessWidget {
             ),
           ],
         );
-        
+
       case ErrorType.network:
         return ErrorData(
           icon: Icons.wifi_off,
@@ -143,7 +143,7 @@ class ErrorScreen extends StatelessWidget {
             ),
           ],
         );
-        
+
       case ErrorType.noResults:
         return ErrorData(
           icon: Icons.search_off,
@@ -160,7 +160,7 @@ class ErrorScreen extends StatelessWidget {
             ),
           ],
         );
-        
+
       case ErrorType.general:
         return ErrorData(
           icon: Icons.error_outline,
@@ -203,4 +203,4 @@ class ErrorAction {
     required this.label,
     required this.onPressed,
   });
-} 
+}

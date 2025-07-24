@@ -71,4 +71,4 @@ class NavigationScreen extends StatelessWidget {
       ),
     );
   }
-} 
+}

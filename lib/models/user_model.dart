@@ -22,9 +22,8 @@ class UserModel {
       name: json['name'],
       photoUrl: json['photoUrl'],
       loginProvider: json['loginProvider'],
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
-          : null,
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
     );
   }
 
@@ -61,4 +60,4 @@ class UserModel {
   String toString() {
     return 'UserModel(id: $id, email: $email, name: $name, loginProvider: $loginProvider)';
   }
-} 
+}

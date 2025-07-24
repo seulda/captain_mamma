@@ -39,29 +39,29 @@ class LoginScreen extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // 앱 제목
               Text(
                 '선장님 오늘의 메뉴는요?',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // 안내 메시지
               Text(
                 '특정 위치 설정 및\n부가기능 이용을 위해\n로그인해주세요',
                 style: Theme.of(context).textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 48),
-              
+
               // 소셜 로그인 버튼들
               Consumer<AuthProvider>(
                 builder: (context, authProvider, child) {
@@ -70,7 +70,7 @@ class LoginScreen extends StatelessWidget {
                       child: CircularProgressIndicator(),
                     );
                   }
-                  
+
                   return Column(
                     children: [
                       // Google 로그인
@@ -79,7 +79,8 @@ class LoginScreen extends StatelessWidget {
                         height: 48,
                         child: ElevatedButton.icon(
                           onPressed: () => _handleGoogleLogin(context),
-                          icon: const Icon(Icons.account_circle, color: Colors.white),
+                          icon: const Icon(Icons.account_circle,
+                              color: Colors.white),
                           label: const Text('Google로 로그인'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF4285F4),
@@ -87,16 +88,17 @@ class LoginScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 12),
-                      
+
                       // Naver 로그인
                       SizedBox(
                         width: double.infinity,
                         height: 48,
                         child: ElevatedButton.icon(
                           onPressed: () => _handleNaverLogin(context),
-                          icon: const Icon(Icons.account_circle, color: Colors.white),
+                          icon: const Icon(Icons.account_circle,
+                              color: Colors.white),
                           label: const Text('Naver로 로그인'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF03C75A),
@@ -104,16 +106,17 @@ class LoginScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 12),
-                      
+
                       // Kakao 로그인
                       SizedBox(
                         width: double.infinity,
                         height: 48,
                         child: ElevatedButton.icon(
                           onPressed: () => _handleKakaoLogin(context),
-                          icon: const Icon(Icons.account_circle, color: Colors.black),
+                          icon: const Icon(Icons.account_circle,
+                              color: Colors.black),
                           label: const Text('Kakao로 로그인'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFEE500),
@@ -121,17 +124,21 @@ class LoginScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // 나중에 하기 버튼
                       TextButton(
                         onPressed: () => AppNavigation.back(),
                         child: Text(
                           '나중에 하기',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context).textTheme.bodyMedium?.color,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color,
+                                  ),
                         ),
                       ),
                     ],
@@ -147,7 +154,7 @@ class LoginScreen extends StatelessWidget {
 
   Future<void> _handleGoogleLogin(BuildContext context) async {
     final authProvider = context.read<AuthProvider>();
-    
+
     try {
       final success = await authProvider.signInWithGoogle();
       if (success && context.mounted) {
@@ -165,7 +172,7 @@ class LoginScreen extends StatelessWidget {
 
   Future<void> _handleNaverLogin(BuildContext context) async {
     final authProvider = context.read<AuthProvider>();
-    
+
     try {
       final success = await authProvider.signInWithNaver();
       if (success && context.mounted) {
@@ -183,7 +190,7 @@ class LoginScreen extends StatelessWidget {
 
   Future<void> _handleKakaoLogin(BuildContext context) async {
     final authProvider = context.read<AuthProvider>();
-    
+
     try {
       final success = await authProvider.signInWithKakao();
       if (success && context.mounted) {
@@ -216,4 +223,4 @@ class LoginScreen extends StatelessWidget {
       ),
     );
   }
-} 
+}

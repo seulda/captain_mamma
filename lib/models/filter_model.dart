@@ -109,19 +109,19 @@ class FilterModel {
   // 필터 텍스트 표현
   String get filterText {
     List<String> parts = [];
-    
+
     if (selectedFoodTypes.isNotEmpty) {
       parts.add(selectedFoodTypes.map((e) => e.displayName).join(', '));
     }
-    
+
     if (selectedMenuTypes.isNotEmpty) {
       parts.add(selectedMenuTypes.map((e) => e.displayName).join(', '));
     }
-    
+
     if (parts.isEmpty) {
       return '전체';
     }
-    
+
     return parts.join(' · ');
   }
 
@@ -151,4 +151,4 @@ class FilterModel {
     }
     return true;
   }
-} 
+}

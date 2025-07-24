@@ -141,4 +141,4 @@ class RestaurantModel {
   int get hashCode {
     return id.hashCode ^ name.hashCode ^ category.hashCode;
   }
-} 
+}

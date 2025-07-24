@@ -147,8 +147,9 @@ class RestaurantProvider extends ChangeNotifier {
   // 랜덤 레스토랑 선택
   RestaurantModel? getRandomRestaurant() {
     if (_filteredRestaurants.isEmpty) return null;
-    
-    final random = DateTime.now().millisecondsSinceEpoch % _filteredRestaurants.length;
+
+    final random =
+        DateTime.now().millisecondsSinceEpoch % _filteredRestaurants.length;
     return _filteredRestaurants[random];
   }
 
@@ -166,18 +167,20 @@ class RestaurantProvider extends ChangeNotifier {
   Future<void> _saveFilterSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // 음식 종류 필터 저장
-      final foodTypeNames = _filter.selectedFoodTypes.map((e) => e.name).toList();
+      final foodTypeNames =
+          _filter.selectedFoodTypes.map((e) => e.name).toList();
       await prefs.setStringList('selectedFoodTypes', foodTypeNames);
-      
+
       // 메뉴 타입 필터 저장
-      final menuTypeNames = _filter.selectedMenuTypes.map((e) => e.name).toList();
+      final menuTypeNames =
+          _filter.selectedMenuTypes.map((e) => e.name).toList();
       await prefs.setStringList('selectedMenuTypes', menuTypeNames);
-      
+
       // 검색 반경 저장
       await prefs.setDouble('searchRadius', _searchRadius);
-      
+
       // 정렬 방식 저장
       await prefs.setString('sortType', _sortType.name);
     } catch (e) {
@@ -189,7 +192,7 @@ class RestaurantProvider extends ChangeNotifier {
   Future<void> _loadSavedSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // 음식 종류 필터 불러오기
       final foodTypeNames = prefs.getStringList('selectedFoodTypes') ?? [];
       final selectedFoodTypes = foodTypeNames
@@ -198,7 +201,7 @@ class RestaurantProvider extends ChangeNotifier {
                 orElse: () => FoodType.korean,
               ))
           .toList();
-      
+
       // 메뉴 타입 필터 불러오기
       final menuTypeNames = prefs.getStringList('selectedMenuTypes') ?? [];
       final selectedMenuTypes = menuTypeNames
@@ -207,22 +210,22 @@ class RestaurantProvider extends ChangeNotifier {
                 orElse: () => MenuType.seafood,
               ))
           .toList();
-      
+
       _filter = FilterModel(
         selectedFoodTypes: selectedFoodTypes,
         selectedMenuTypes: selectedMenuTypes,
       );
-      
+
       // 검색 반경 불러오기
       _searchRadius = prefs.getDouble('searchRadius') ?? 1.0;
-      
+
       // 정렬 방식 불러오기
       final sortTypeName = prefs.getString('sortType') ?? 'distance';
       _sortType = RestaurantSortType.values.firstWhere(
         (type) => type.name == sortTypeName,
         orElse: () => RestaurantSortType.distance,
       );
-      
+
       notifyListeners();
     } catch (e) {
       debugPrint('저장된 설정 불러오기 실패: $e');
@@ -234,16 +237,17 @@ class RestaurantProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final searchHistory = prefs.getStringList('searchHistory') ?? [];
-      
-      final searchItem = '${location.address}|${location.latitude}|${location.longitude}';
+
+      final searchItem =
+          '${location.address}|${location.latitude}|${location.longitude}';
       searchHistory.remove(searchItem); // 중복 제거
       searchHistory.insert(0, searchItem); // 최상단에 추가
-      
+
       // 최대 10개까지만 저장
       if (searchHistory.length > 10) {
         searchHistory.removeRange(10, searchHistory.length);
       }
-      
+
       await prefs.setStringList('searchHistory', searchHistory);
     } catch (e) {
       debugPrint('검색 기록 저장 실패: $e');
@@ -255,19 +259,23 @@ class RestaurantProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final searchHistory = prefs.getStringList('searchHistory') ?? [];
-      
-      return searchHistory.map((item) {
-        final parts = item.split('|');
-        if (parts.length == 3) {
-          return LocationModel(
-            latitude: double.parse(parts[1]),
-            longitude: double.parse(parts[2]),
-            address: parts[0],
-            timestamp: DateTime.now(),
-          );
-        }
-        return null;
-      }).where((item) => item != null).cast<LocationModel>().toList();
+
+      return searchHistory
+          .map((item) {
+            final parts = item.split('|');
+            if (parts.length == 3) {
+              return LocationModel(
+                latitude: double.parse(parts[1]),
+                longitude: double.parse(parts[2]),
+                address: parts[0],
+                timestamp: DateTime.now(),
+              );
+            }
+            return null;
+          })
+          .where((item) => item != null)
+          .cast<LocationModel>()
+          .toList();
     } catch (e) {
       debugPrint('검색 기록 불러오기 실패: $e');
       return [];
@@ -295,4 +303,4 @@ class RestaurantProvider extends ChangeNotifier {
 enum RestaurantSortType {
   distance,
   rating,
-} 
+}

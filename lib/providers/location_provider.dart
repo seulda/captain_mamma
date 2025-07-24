@@ -15,7 +15,8 @@ class LocationProvider extends ChangeNotifier {
 
   LocationModel? get currentLocation => _currentLocation;
   LocationModel? get selectedLocation => _selectedLocation;
-  LocationModel get searchLocation => _selectedLocation ?? _currentLocation ?? LocationModel.defaultLocation();
+  LocationModel get searchLocation =>
+      _selectedLocation ?? _currentLocation ?? LocationModel.defaultLocation();
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get hasLocationPermission => _hasLocationPermission;
@@ -29,11 +30,11 @@ class LocationProvider extends ChangeNotifier {
     try {
       final status = await Permission.location.status;
       _hasLocationPermission = status == PermissionStatus.granted;
-      
+
       if (_hasLocationPermission) {
         await getCurrentLocation();
       }
-      
+
       notifyListeners();
     } catch (e) {
       debugPrint('위치 권한 확인 실패: $e');
@@ -45,13 +46,13 @@ class LocationProvider extends ChangeNotifier {
     try {
       final status = await Permission.location.request();
       _hasLocationPermission = status == PermissionStatus.granted;
-      
+
       if (_hasLocationPermission) {
         await getCurrentLocation();
       } else {
         _setError('위치 권한이 필요합니다.');
       }
-      
+
       notifyListeners();
       return _hasLocationPermission;
     } catch (e) {
@@ -107,7 +108,7 @@ class LocationProvider extends ChangeNotifier {
 
     try {
       final address = await _getAddressFromCoordinates(latitude, longitude);
-      
+
       _selectedLocation = LocationModel(
         latitude: latitude,
         longitude: longitude,
@@ -129,14 +130,14 @@ class LocationProvider extends ChangeNotifier {
   Future<List<LocationModel>> searchLocationByAddress(String address) async {
     try {
       final locations = await locationFromAddress(address);
-      
+
       List<LocationModel> results = [];
       for (final location in locations) {
         final addressString = await _getAddressFromCoordinates(
           location.latitude,
           location.longitude,
         );
-        
+
         results.add(LocationModel(
           latitude: location.latitude,
           longitude: location.longitude,
@@ -144,7 +145,7 @@ class LocationProvider extends ChangeNotifier {
           timestamp: DateTime.now(),
         ));
       }
-      
+
       return results;
     } catch (e) {
       debugPrint('주소 검색 실패: $e');
@@ -160,7 +161,8 @@ class LocationProvider extends ChangeNotifier {
   }
 
   // 좌표로부터 주소 가져오기
-  Future<String> _getAddressFromCoordinates(double latitude, double longitude) async {
+  Future<String> _getAddressFromCoordinates(
+      double latitude, double longitude) async {
     try {
       final placemarks = await placemarkFromCoordinates(latitude, longitude);
       if (placemarks.isNotEmpty) {
@@ -177,7 +179,7 @@ class LocationProvider extends ChangeNotifier {
   // 현재 위치 저장
   Future<void> _saveCurrentLocation() async {
     if (_currentLocation == null) return;
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble('currentLatitude', _currentLocation!.latitude);
@@ -191,7 +193,7 @@ class LocationProvider extends ChangeNotifier {
   // 선택된 위치 저장
   Future<void> _saveSelectedLocation() async {
     if (_selectedLocation == null) return;
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble('selectedLatitude', _selectedLocation!.latitude);
@@ -206,12 +208,12 @@ class LocationProvider extends ChangeNotifier {
   Future<void> _loadSavedLocation() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // 현재 위치 불러오기
       final currentLat = prefs.getDouble('currentLatitude');
       final currentLng = prefs.getDouble('currentLongitude');
       final currentAddr = prefs.getString('currentAddress');
-      
+
       if (currentLat != null && currentLng != null && currentAddr != null) {
         _currentLocation = LocationModel(
           latitude: currentLat,
@@ -220,12 +222,12 @@ class LocationProvider extends ChangeNotifier {
           timestamp: DateTime.now(),
         );
       }
-      
+
       // 선택된 위치 불러오기
       final selectedLat = prefs.getDouble('selectedLatitude');
       final selectedLng = prefs.getDouble('selectedLongitude');
       final selectedAddr = prefs.getString('selectedAddress');
-      
+
       if (selectedLat != null && selectedLng != null && selectedAddr != null) {
         _selectedLocation = LocationModel(
           latitude: selectedLat,
@@ -234,7 +236,7 @@ class LocationProvider extends ChangeNotifier {
           timestamp: DateTime.now(),
         );
       }
-      
+
       notifyListeners();
     } catch (e) {
       debugPrint('저장된 위치 불러오기 실패: $e');
@@ -269,4 +271,4 @@ class LocationProvider extends ChangeNotifier {
   void _clearError() {
     _errorMessage = null;
   }
-} 
+}

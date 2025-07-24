@@ -32,38 +32,132 @@
     <title>선장님 오늘의 메뉴는요?</title>
     <link rel="manifest" href="manifest.json" />
 
+    <!-- Google Sign-In Client ID (환경 변수로 관리) -->
+    <meta
+      name="google-signin-client_id"
+      content="YOUR_GOOGLE_SIGNIN_CLIENT_ID"
+    />
+
     <!-- Google Maps JavaScript API - 간단하고 확실한 방법 -->
     <script>
       // 간단한 상태 관리
       window.googleMapsLoaded = false;
-      
+
       // Google Maps API 로드 함수 (단순함)
-      window.loadGoogleMapsAPI = function(apiKey) {
-        if (window.googleMapsLoaded || document.querySelector('script[src*="maps.googleapis.com"]')) {
+      window.loadGoogleMapsAPI = function (apiKey) {
+        if (
+          window.googleMapsLoaded ||
+          document.querySelector('script[src*="maps.googleapis.com"]')
+        ) {
           console.log("Google Maps API가 이미 로드되었거나 로딩 중입니다.");
           return;
         }
-        
+
         if (apiKey && apiKey.trim() !== "") {
           const script = document.createElement("script");
           script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
           script.async = true;
-          
-          script.onload = function() {
+
+          script.onload = function () {
             window.googleMapsLoaded = true;
-            console.log("✅ Google Maps API 로드 완료! (API Key: " + apiKey.substring(0, 10) + "...)");
+            console.log(
+              "✅ Google Maps API 로드 완료! (API Key: " +
+                apiKey.substring(0, 10) +
+                "...)"
+            );
           };
-          
-          script.onerror = function() {
+
+          script.onerror = function () {
             console.error("❌ Google Maps API 로드 실패");
           };
-          
+
           document.head.appendChild(script);
           console.log("🔄 Google Maps API 로드 시작...");
         } else {
           console.error("❌ Google Maps API Key가 없습니다.");
           console.error("💡 해결: ./scripts/run_web.bat 으로 실행하세요.");
         }
+      };
+
+      // Google Places Service를 사용한 음식점 검색 함수
+      window.searchNearbyRestaurants = function (lat, lng, radius, callback) {
+        console.log(`🔍 음식점 검색 시작: ${lat}, ${lng}, 반경 ${radius}m`);
+
+        if (
+          !window.google ||
+          !window.google.maps ||
+          !window.google.maps.places
+        ) {
+          console.error("❌ Google Maps Places API가 로드되지 않았습니다.");
+          callback([]);
+          return;
+        }
+
+        // PlacesService 생성
+        const service = new google.maps.places.PlacesService(
+          document.createElement("div")
+        );
+
+        // 검색 요청 설정
+        const request = {
+          location: new google.maps.LatLng(lat, lng),
+          radius: radius,
+          type: "restaurant",
+        };
+
+        // 주변 음식점 검색
+        service.nearbySearch(request, function (results, status) {
+          console.log(`📡 Places API 응답: ${status}`);
+
+          if (status === google.maps.places.PlacesServiceStatus.OK) {
+            console.log(`✅ ${results.length}개 음식점 발견`);
+
+            // API 응답 원본 데이터를 콘솔에 상세 출력
+            console.log("📋 Google Places API 원본 응답:");
+            results.forEach((place, index) => {
+              console.log(`${index + 1}. ${place.name || "이름없음"}`);
+              console.log(`   평점: ${place.rating || "N/A"}`);
+              console.log(
+                `   주소: ${place.vicinity || place.formatted_address || "N/A"}`
+              );
+              console.log(
+                `   분류: ${place.types ? place.types.join(", ") : "N/A"}`
+              );
+              console.log(`   가격대: ${place.price_level || "N/A"}`);
+              console.log(`   Place ID: ${place.place_id || "N/A"}`);
+              console.log(
+                `   위치: ${place.geometry?.location?.lat()}, ${place.geometry?.location?.lng()}`
+              );
+              console.log("   ---");
+            });
+
+            // 결과를 Dart에서 사용할 수 있는 형태로 변환
+            const restaurants = results.map(function (place) {
+              return {
+                name: place.name || "이름 없음",
+                rating: place.rating || 0,
+                vicinity:
+                  place.vicinity || place.formatted_address || "주소 없음",
+                types: place.types || [],
+                price_level: place.price_level || 0,
+                place_id: place.place_id || "",
+                latitude: place.geometry.location.lat(),
+                longitude: place.geometry.location.lng(),
+                icon: place.icon || "",
+                photos: place.photos
+                  ? place.photos.map((photo) => photo.getUrl())
+                  : [],
+              };
+            });
+
+            // 원본 배열을 직접 전달 (Dart에서 js_util.dartify로 변환)
+            console.log("🚀 Dart로 데이터 전달 중...");
+            callback(restaurants);
+          } else {
+            console.error(`❌ Places API 검색 실패: ${status}`);
+            callback([]);
+          }
+        });
       };
     </script>
   </head>

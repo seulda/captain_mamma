@@ -15,10 +15,22 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   final AuthService _authService = AuthService();
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  late final GoogleSignIn? _googleSignIn;
 
   AuthProvider() {
+    _initializeGoogleSignIn();
     _checkAuthStatus();
+  }
+
+  // Google Sign-In 초기화 (Client ID가 없으면 비활성화)
+  void _initializeGoogleSignIn() {
+    try {
+      _googleSignIn = GoogleSignIn();
+    } catch (e) {
+      debugPrint('⚠️ Google Sign-In 초기화 실패: $e');
+      debugPrint('💡 Google Sign-In Client ID가 설정되지 않았습니다.');
+      _googleSignIn = null;
+    }
   }
 
   // 로그인 상태 확인
@@ -48,9 +60,14 @@ class AuthProvider extends ChangeNotifier {
 
   // Google 로그인
   Future<bool> signInWithGoogle() async {
+    if (_googleSignIn == null) {
+      debugPrint('❌ Google Sign-In이 초기화되지 않았습니다.');
+      return false;
+    }
+
     _setLoading(true);
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      final GoogleSignInAccount? googleUser = await _googleSignIn!.signIn();
       if (googleUser == null) {
         _setLoading(false);
         return false;
@@ -65,13 +82,13 @@ class AuthProvider extends ChangeNotifier {
       );
 
       await _saveUserData(user);
-      
+
       // 서버에 사용자 정보 저장 (백그라운드에서 실행)
       _authService.saveUserToServer(user);
-      
+
       _user = user;
       _isAuthenticated = true;
-      
+
       notifyListeners();
       return true;
     } catch (e) {
@@ -117,16 +134,16 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     try {
       // 소셜 로그인 로그아웃
-      if (_user?.loginProvider == 'google') {
-        await _googleSignIn.signOut();
+      if (_user?.loginProvider == 'google' && _googleSignIn != null) {
+        await _googleSignIn!.signOut();
       }
 
       // 로컬 데이터 삭제
       await _clearUserData();
-      
+
       _user = null;
       _isAuthenticated = false;
-      
+
       notifyListeners();
     } catch (e) {
       debugPrint('로그아웃 실패: $e');
@@ -170,4 +187,4 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = loading;
     notifyListeners();
   }
-} 
+}

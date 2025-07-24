@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:developer' as developer;
-// import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
@@ -25,8 +25,13 @@ void main() async {
         name: 'EnvConfig');
   }
 
-  // Google Mobile Ads 초기화 (웹에서는 임시 비활성화)
-  // await MobileAds.instance.initialize();
+  // Google Mobile Ads 초기화
+  try {
+    await MobileAds.instance.initialize();
+    developer.log('✅ Google Mobile Ads 초기화 완료', name: 'AdMob');
+  } catch (e) {
+    developer.log('❌ Google Mobile Ads 초기화 실패: $e', name: 'AdMob');
+  }
 
   runApp(const MyApp());
 }

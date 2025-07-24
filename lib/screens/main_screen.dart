@@ -9,9 +9,10 @@ import '../providers/auth_provider.dart';
 import '../providers/restaurant_provider.dart';
 import '../utils/router.dart';
 import '../utils/env_config.dart';
+import '../services/places_api_service.dart';
+import '../widgets/admob_banner.dart';
 
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:js' as js show context;
+// 플랫폼별 JavaScript interop은 services에서 처리
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -43,46 +44,14 @@ class _MainScreenState extends State<MainScreen> {
     _initializeLocation();
   }
 
-  /// 웹 플랫폼에서 Google Maps API 로드 (간단한 방법)
+  /// 지도 초기화 (플랫폼 공통)
   void _initializeWebGoogleMaps() async {
-    if (kIsWeb) {
-      const apiKey = EnvConfig.googleMapsApiKey;
-      if (apiKey.isNotEmpty) {
-        try {
-          debugPrint('🔄 Google Maps API 로드를 시작합니다...');
-
-          // JavaScript의 window.loadGoogleMapsAPI 함수 호출 (단순)
-          js.context.callMethod('loadGoogleMapsAPI', [apiKey]);
-
-          // 간단하게 2초 기다린 후 지도 표시 (대부분의 경우 충분함)
-          await Future.delayed(const Duration(seconds: 2));
-
-          setState(() {
-            _isGoogleMapsLoaded = true;
-          });
-
-          debugPrint('✅ 웹에서 지도 표시를 시작합니다.');
-        } catch (e) {
-          debugPrint('❌ 웹에서 Google Maps API 로드 실패: $e');
-          // 에러가 있어도 일단 지도를 표시해봄
-          setState(() {
-            _isGoogleMapsLoaded = true;
-          });
-        }
-      } else {
-        debugPrint('❌ 웹용 Google Maps API 키가 설정되지 않았습니다.');
-        debugPrint('💡 해결 방법: ./scripts/run_web.bat으로 실행하세요.');
-        // API 키가 없어도 일단 지도 영역은 표시
-        setState(() {
-          _isGoogleMapsLoaded = true;
-        });
-      }
-    } else {
-      // 웹이 아닌 플랫폼에서는 바로 로드됨으로 처리
-      setState(() {
-        _isGoogleMapsLoaded = true;
-      });
-    }
+    // 모든 플랫폼에서 지도가 바로 사용 가능하도록 설정
+    // 웹에서는 index.html에서 이미 Google Maps API가 로드됨
+    setState(() {
+      _isGoogleMapsLoaded = true;
+    });
+    debugPrint('✅ 지도 초기화 완료');
   }
 
   Future<void> _initializeLocation() async {
@@ -191,31 +160,70 @@ class _MainScreenState extends State<MainScreen> {
                       myLocationEnabled: true,
                       myLocationButtonEnabled: true,
                       mapType: MapType.normal,
-                      onTap: _onMapTapped,
+                      onTap: _isModalOpen ? null : _onMapTapped,
                       compassEnabled: !_isModalOpen,
                       rotateGesturesEnabled: !_isModalOpen,
                       scrollGesturesEnabled: !_isModalOpen,
                       tiltGesturesEnabled: !_isModalOpen,
                       zoomGesturesEnabled: !_isModalOpen,
+                      mapToolbarEnabled: !_isModalOpen,
                       zoomControlsEnabled: false,
                     );
                   },
                 ),
               ),
 
-              // 광고 배너 영역 (페이지 하단 고정)
+              // 임시로 AdMob 비활성화 (테스트용)
               Container(
                 height: 50,
                 width: double.infinity,
                 color: Colors.amber[100],
                 child: const Center(
                   child: Text(
-                    '광고 배너 영역',
+                    '임시 배너 영역 (AdMob 비활성화)',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
               ),
             ],
+          ),
+
+          // 좌측 상단 위치 권한 버튼
+          Positioned(
+            top: 20,
+            left: 20,
+            child: Consumer<LocationProvider>(
+              builder: (context, locationProvider, child) {
+                return GestureDetector(
+                  onTap: () {}, // 터치 이벤트 격리 (지도로 전파 방지)
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      debugPrint('🔥 위치 아이콘 클릭됨!');
+                      _showLocationDialog(context);
+                    },
+                    backgroundColor: locationProvider.hasLocationPermission
+                        ? (locationProvider.currentLocation != null
+                            ? Colors.green[100]
+                            : Colors.orange[100])
+                        : Colors.red[100],
+                    elevation: 4,
+                    mini: true,
+                    child: Icon(
+                      locationProvider.hasLocationPermission
+                          ? (locationProvider.currentLocation != null
+                              ? Icons.location_on
+                              : Icons.location_searching)
+                          : Icons.location_off,
+                      color: locationProvider.hasLocationPermission
+                          ? (locationProvider.currentLocation != null
+                              ? Colors.green[700]
+                              : Colors.orange[700])
+                          : Colors.red[700],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
 
           // 우측 상단 햄버거 메뉴 버튼
@@ -367,26 +375,31 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _showFilterDialog() {
+    debugPrint('🔥 종류 선택 버튼 클릭됨! 모달 열기');
     setState(() {
       _isModalOpen = true; // 모달 열림 - 지도 제스처 비활성화
     });
+    debugPrint('📋 지도 제스처 비활성화됨 (_isModalOpen: true)');
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent, // 모달 배경을 투명하게
-      barrierColor: Colors.black.withValues(alpha: 0.7), // 어두운 배경
+      isDismissible: true, // 배경 클릭으로 닫기 (기본값)
+      enableDrag: true, // 드래그로 닫기 허용 (기본값)
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.7),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) => Stack(
         children: [
-          // 상단 투명 영역 (터치 시 모달 닫기)
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.5,
-              color: Colors.transparent,
+          // 전체 화면 투명 배경 (터치 시 모달 닫기)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                color: Colors.transparent,
+              ),
             ),
           ),
 
@@ -396,12 +409,12 @@ class _MainScreenState extends State<MainScreen> {
             minChildSize: 0.3,
             maxChildSize: 0.8, // 최대 크기도 줄여서 상단 여백 확보
             builder: (context, scrollController) {
-              return AbsorbPointer(
-                absorbing: false, // 모달 내부 터치는 허용
-                child: Listener(
-                  onPointerSignal: (event) {
-                    // 스크롤 이벤트 차단
-                    return;
+              return GestureDetector(
+                onTap: () {}, // 모든 제스처를 여기서 차단
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    // 모든 스크롤 이벤트 전파 차단
+                    return true;
                   },
                   child: Container(
                     decoration: const BoxDecoration(
@@ -434,7 +447,7 @@ class _MainScreenState extends State<MainScreen> {
                         Expanded(
                           child: NotificationListener<ScrollNotification>(
                             onNotification: (notification) =>
-                                true, // 스크롤 알림 전파 차단
+                                false, // 내부 스크롤은 허용
                             child: SingleChildScrollView(
                               controller: scrollController,
                               physics:
@@ -543,12 +556,13 @@ class _MainScreenState extends State<MainScreen> {
                                             ),
                                           ),
                                           child: Text(
-                                            provider.filter.filterText,
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .primaryColor,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                            '선택된 필터가 적용되었습니다.',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
                                           ),
                                         ),
                                         const SizedBox(height: 16),
@@ -598,58 +612,71 @@ class _MainScreenState extends State<MainScreen> {
       ),
     ).then((_) {
       // 모달 닫힘 - 지도 제스처 다시 활성화
+      debugPrint('📋 모달 닫힘! 지도 제스처 활성화');
       setState(() {
         _isModalOpen = false;
       });
+      debugPrint('📋 지도 제스처 활성화됨 (_isModalOpen: false)');
     });
   }
 
   void _searchRestaurants() async {
-    final locationProvider = context.read<LocationProvider>();
-    final restaurantProvider = context.read<RestaurantProvider>();
-    final authProvider = context.read<AuthProvider>();
+    debugPrint('🔍 검색 버튼 클릭됨 - 현재 지도 영역의 음식점 검색 시작');
 
-    // 위치 권한 확인
-    if (!locationProvider.hasLocationPermission) {
-      AppNavigation.toLocationError();
-      return;
-    }
-
-    // 검색 위치 결정
-    final searchLocation = locationProvider.searchLocation;
-
-    // 비회원이 위치 변경을 시도하는 경우
-    if (!authProvider.isAuthenticated &&
-        locationProvider.selectedLocation != null) {
-      AppNavigation.toLogin();
-      return;
-    }
-
-    // 레스토랑 검색
-    await restaurantProvider.searchRestaurants(searchLocation);
-
-    // 결과가 없는 경우
-    if (restaurantProvider.restaurants.isEmpty) {
-      AppNavigation.toNoResultsError();
-      return;
-    }
-
-    // 검색 결과를 지도에 마커로 표시
-    _addRestaurantMarkers();
-
-    if (mounted) {
+    // 지도 컨트롤러가 준비되지 않은 경우
+    if (_mapController == null) {
+      debugPrint('❌ 지도가 아직 로드되지 않았습니다.');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('${restaurantProvider.restaurants.length}개의 맛집을 찾았습니다!'),
-          action: SnackBarAction(
-            label: '목록 보기',
-            onPressed: () {
-              // TODO: 검색 결과 리스트 화면으로 이동
-            },
-          ),
-        ),
+        const SnackBar(content: Text('지도가 로드되지 않았습니다. 잠시 후 다시 시도해주세요.')),
       );
+      return;
+    }
+
+    try {
+      // async 작업 전에 context에서 값 읽기
+      final searchRadiusKm = context.read<RestaurantProvider>().searchRadius;
+
+      // 현재 지도의 보이는 영역 가져오기
+      final bounds = await _mapController!.getVisibleRegion();
+      debugPrint('🗺️ 현재 지도 영역 정보:');
+      debugPrint(
+          '   북동쪽: ${bounds.northeast.latitude}, ${bounds.northeast.longitude}');
+      debugPrint(
+          '   남서쪽: ${bounds.southwest.latitude}, ${bounds.southwest.longitude}');
+
+      // Places API로 음식점 검색
+      final restaurants = await PlacesApiService.searchRestaurantsInBounds(
+        bounds: bounds,
+        radius: searchRadiusKm * 1000, // km를 m로 변환
+      );
+
+      // 검색 결과 콘솔 출력
+      PlacesApiService.printRestaurantList(restaurants);
+
+      // 사용자에게 결과 알림
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🍽️ ${restaurants.length}개의 실제 음식점을 찾았습니다! (콘솔 확인)'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: '콘솔 보기',
+              textColor: Colors.white,
+              onPressed: () {
+                debugPrint(
+                    '💡 개발자 도구의 콘솔 탭에서 실제 Google Places API 검색 결과를 확인하세요.');
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ 음식점 검색 중 오류 발생: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('검색 중 오류가 발생했습니다: $e')),
+        );
+      }
     }
   }
 
@@ -666,5 +693,176 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
     }
+  }
+
+  // 위치 권한 상태 다이얼로그 표시 (간단 버전)
+  void _showLocationDialog(BuildContext context) {
+    final locationProvider = context.read<LocationProvider>();
+
+    debugPrint('🔥 _showLocationDialog 실행됨!');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('📍 위치 테스트'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                '위치 권한: ${locationProvider.hasLocationPermission ? "허용됨" : "거부됨"}'),
+            Text(
+                '현재 위치: ${locationProvider.currentLocation?.latitude?.toStringAsFixed(4) ?? "없음"}, ${locationProvider.currentLocation?.longitude?.toStringAsFixed(4) ?? "없음"}'),
+            if (locationProvider.currentLocation != null)
+              Text('주소: ${locationProvider.currentLocation!.address}'),
+            if (locationProvider.errorMessage != null) ...[
+              const SizedBox(height: 8),
+              Text('오류: ${locationProvider.errorMessage}',
+                  style: const TextStyle(color: Colors.red)),
+            ],
+            const SizedBox(height: 16),
+            const Text('🤖 애뮬레이터 테스트용:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('• Extended Controls > Location\n• 아래 테스트 위치 버튼 사용',
+                style: TextStyle(fontSize: 12)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('닫기'),
+          ),
+          if (!locationProvider.hasLocationPermission)
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                debugPrint('🔄 위치 권한 요청 시작');
+                await locationProvider.requestLocationPermission();
+                debugPrint('🔄 위치 권한 요청 완료');
+              },
+              child: const Text('위치 권한 요청'),
+            ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              // 서울역 위치로 테스트 설정
+              debugPrint('🏢 테스트 위치 설정: 서울역');
+              await locationProvider.setSelectedLocation(37.5565, 126.9720);
+              debugPrint('✅ 테스트 위치 설정 완료');
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            child: const Text('서울역 설정'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 기존 복잡한 다이얼로그 (백업용)
+  void _showLocationDialogOld(BuildContext context) {
+    final locationProvider = context.read<LocationProvider>();
+
+    // 디버그 정보 출력
+    debugPrint('🔍 위치 다이얼로그 열기:');
+    debugPrint('  - 위치 권한: ${locationProvider.hasLocationPermission}');
+    debugPrint(
+        '  - 현재 위치: ${locationProvider.currentLocation?.latitude}, ${locationProvider.currentLocation?.longitude}');
+    debugPrint('  - 로딩 중: ${locationProvider.isLoading}');
+    debugPrint('  - 에러 메시지: ${locationProvider.errorMessage}');
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('📍 위치 서비스'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!locationProvider.hasLocationPermission) ...[
+                const Text('위치 권한이 필요합니다.'),
+                const SizedBox(height: 8),
+                const Text('현재 위치를 찾아 주변 맛집을 검색하려면 위치 권한을 허용해주세요.'),
+              ] else if (locationProvider.currentLocation == null) ...[
+                const Text('현재 위치를 가져오는 중입니다...'),
+                const SizedBox(height: 8),
+                if (locationProvider.isLoading)
+                  const CircularProgressIndicator()
+                else
+                  const Text('위치를 가져올 수 없습니다. 다시 시도해주세요.'),
+              ] else ...[
+                const Text('현재 위치:'),
+                const SizedBox(height: 8),
+                Text(locationProvider.currentLocation!.address),
+                const SizedBox(height: 8),
+                Text(
+                    '위도: ${locationProvider.currentLocation!.latitude.toStringAsFixed(4)}'),
+                Text(
+                    '경도: ${locationProvider.currentLocation!.longitude.toStringAsFixed(4)}'),
+              ],
+              if (locationProvider.errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '⚠️ ${locationProvider.errorMessage}',
+                    style: TextStyle(color: Colors.red[700]),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            if (!locationProvider.hasLocationPermission) ...[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('취소'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  final granted =
+                      await locationProvider.requestLocationPermission();
+                  if (granted) {
+                    _moveMapToCurrentLocation();
+                  }
+                },
+                child: const Text('권한 허용'),
+              ),
+            ] else if (locationProvider.currentLocation == null) ...[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('닫기'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await locationProvider.getCurrentLocation();
+                  _moveMapToCurrentLocation();
+                },
+                child: const Text('다시 시도'),
+              ),
+            ] else ...[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('닫기'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await locationProvider.getCurrentLocation();
+                  _moveMapToCurrentLocation();
+                },
+                child: const Text('위치 새로고침'),
+              ),
+            ],
+          ],
+        );
+      },
+    );
   }
 }

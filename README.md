@@ -97,6 +97,7 @@ GMSServices.provideAPIKey("YOUR_GOOGLE_MAPS_API_KEY")
 # 디버그 모드로 실행
 flutter run
 flutter run -d chrome --web-hostname=0.0.0.0 --web-port=8080
+flutter clean && flutter pub get && ./scripts/run_android.sh
 
 # 릴리즈 모드로 빌드
 flutter build apk  # Android
@@ -107,34 +108,23 @@ flutter build ios  # iOS
 
 ```
 lib/
-├── main.dart                 # 앱 엔트리 포인트
-├── models/                   # 데이터 모델
-│   ├── user_model.dart
-│   ├── location_model.dart
-│   ├── restaurant_model.dart
-│   └── filter_model.dart
-├── providers/                # 상태 관리
-│   ├── theme_provider.dart
-│   ├── auth_provider.dart
-│   ├── location_provider.dart
-│   └── restaurant_provider.dart
-├── screens/                  # 화면 UI
-│   ├── splash_screen.dart
-│   ├── main_screen.dart
-│   ├── login_screen.dart
-│   ├── restaurant_detail_screen.dart
-│   ├── navigation_screen.dart
-│   ├── settings_screen.dart
-│   └── error_screen.dart
-├── services/                 # API 서비스
-│   ├── auth_service.dart
-│   └── restaurant_service.dart
-├── themes/                   # 테마 설정
-│   └── app_theme.dart
-├── utils/                    # 유틸리티
-│   └── router.dart
-└── widgets/                  # 재사용 위젯
+├── core/                          # 공통/코어 코드 (에러, 네트워크, 유틸, 공용 위젯 등)
+│   ├── error/
+│   ├── network/
+│   ├── utils/
+│   └── widgets/
+├── features/                      # 각 기능(Feature)별 폴더
+│   ├── map/
+│   │   ├── data/                  # 데이터 계층 (datasources, models, repositories)
+│   │   ├── domain/                # 도메인 계층 (entities, repositories, usecases)
+│   │   └── presentation/          # 프리젠테이션 계층 (bloc, pages, widgets)
+│   └── ...                        # 다른 feature도 동일 구조
+├── main.dart                      # 앱 엔트리포인트
 ```
+
+- 각 feature는 data/domain/presentation 3계층으로 분리
+- core/에는 공통 유틸, 에러, 네트워크, 공용 위젯 등 위치
+- Bloc, Freezed, Either, Repository 패턴 등 클린 아키텍처 원칙 적용
 
 ## 🔧 필요한 API 키
 
